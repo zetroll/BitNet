@@ -1,0 +1,53 @@
+name: Build BitNet for Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install CMake and Clang
+        run: |
+          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"' --yes
+          choco install llvm --version=18.0.0 --yes
+
+      - name: Install Python dependencies
+        run: pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Download pretrained model
+        run: |
+          pip install huggingface_hub
+          python - <<EOF
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id="microsoft/BitNet-b1.58-2B-4T",
+    local_dir="models/BitNet-b1.58-2B-4T"
+)
+EOF
+
+      - name: Build BitNet with I2_S kernel
+        env:
+          PATH: |
+            C:\Program Files\LLVM\bin;${{ env.PATH }}
+        run: |
+          python setup_env.py --model-dir models/BitNet-b1.58-2B-4T --quant-type i2_s
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: bitnet-windows
+          path: |
+            run_inference.exe
+            models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf
