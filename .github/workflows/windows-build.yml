@@ -30,12 +30,12 @@ jobs:
         run: |
           pip install huggingface_hub
           python - <<EOF
-from huggingface_hub import snapshot_download
-snapshot_download(
-    repo_id="microsoft/BitNet-b1.58-2B-4T",
-    local_dir="models/BitNet-b1.58-2B-4T"
-)
-EOF
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="microsoft/BitNet-b1.58-2B-4T",
+              local_dir="models/BitNet-b1.58-2B-4T"
+          )
+          EOF
 
       - name: Build BitNet with I2_S kernel
         env:
